@@ -13,8 +13,8 @@ const TikTok = function() {
 }
 
 TikTok.prototype.generateDevice = async function() {
-	const randDevice = this.getRandFromFile("devices.json")
-	const randCarrier = this.getRandFromFile("carriers.json")
+	const randDevice = getRandFromFile("devices.json")
+	const randCarrier = getRandFromFile("carriers.json")
 	this.device = {
 		default: {
 			ac: "wifi",
@@ -31,8 +31,8 @@ TikTok.prototype.generateDevice = async function() {
 			language: "en",
 			os_api: "25",
 			os_version: "7.1.2",
-			uuid: this.randomString(15, "#"),
-			openudid: this.randomString(15, "a#"),
+			uuid: randomString(15, "#"),
+			openudid: randomString(15, "a#"),
 			manifest_version_code: "2019092901",
 			resolution: randDevice[2],
 			dpi: randDevice[3],
@@ -67,7 +67,7 @@ TikTok.prototype.registerDevice = async function() {
 	const protocol = "https"
 	const hostname = "log2.musical.ly"
 	const path = "service/2/device_register/"
-	const requestUrl = this.buildUrl(protocol, hostname, path, this.device.default)
+	const requestUrl = buildUrl(protocol, hostname, path, this.device.default)
 	const body = {
 		magic_tag: "ss_app_log",
 		header: {
@@ -114,7 +114,7 @@ TikTok.prototype.registerDevice = async function() {
 		"content-type": "application/json; charset=utf-8",
 		"user-agent": this.device["user-agent"]
 	}
-	const signature = await this.signRequest(requestUrl.protocol + requestUrl.host + requestUrl.pathname, requestUrl.search, body, headers)
+	const signature = await signRequest(requestUrl.protocol + requestUrl.host + requestUrl.pathname, requestUrl.search, body, headers)
 	if (!signature) {
 		throw new Error("No signature")
 	} else {
@@ -127,7 +127,7 @@ TikTok.prototype.registerDevice = async function() {
 			body: body,
 			json: true
 		}
-		const response = await this.sendRequest(options)
+		const response = await sendRequest(options)
 		if (response.body["new_user"] && response.body["new_user"] === 1) {
 			this.device.install_id = response.body.install_id_str
 			this.device.device_id = response.body.device_id_str
@@ -149,7 +149,7 @@ TikTok.prototype.registerAccount = async function(email, password) {
 	query.iid = this.device.install_id
 	query.device_id = this.device.device_id
 	query.account_sdk_version = "371"
-	const requestUrl = this.buildUrl(protocol, hostname, path, query)
+	const requestUrl = buildUrl(protocol, hostname, path, query)
 	const body = formurlencoded({
 		email: Buffer.from(xorCrypt(this.session.email, 5), "utf8").toString("hex"),
 		mix_mode: "1",
@@ -161,7 +161,7 @@ TikTok.prototype.registerAccount = async function(email, password) {
 		Cookie: "install_id=" + this.device.install_id,
 		"content-type": "application/x-www-form-urlencoded; charset=UTF-8"
 	}
-	const signature = await this.signRequest(requestUrl.protocol + requestUrl.host + requestUrl.pathname, requestUrl.search, body, headers)
+	const signature = await signRequest(requestUrl.protocol + requestUrl.host + requestUrl.pathname, requestUrl.search, body, headers)
 	headers["X-Gorgon"] = signature["X-Gorgon"]
 	headers["X-Khronos"] = signature["X-Khronos"]
 
@@ -172,7 +172,7 @@ TikTok.prototype.registerAccount = async function(email, password) {
 		body: body,
 		json: true
 	}
-	const response = await this.sendRequest(options)
+	const response = await sendRequest(options)
 	if (response.body.data.error_code === 1105) {
 		await this.solveCaptcha()
 		return await this.registerAccount(arguments[0], arguments[1])
@@ -201,19 +201,19 @@ TikTok.prototype.solveCaptcha = async function() {
 		os: "0",
 		challenge_code: "1105"
 	}
-	let requestUrl = this.buildUrl(protocol, hostname, path, query)
+	let requestUrl = buildUrl(protocol, hostname, path, query)
 	let options = {
 		method: "GET",
 		url: requestUrl.href,
 		json: true
 	}
-	const captcha = await this.sendRequest(options)
-	let puzzle = await this.sendRequest({
+	const captcha = await sendRequest(options)
+	let puzzle = await sendRequest({
 		method: "GET",
 		encoding: null,
 		url: captcha["body"].data.question.url1
 	})
-	let piece = await this.sendRequest({
+	let piece = await sendRequest({
 		method: "GET",
 		encoding: null,
 		url: captcha["body"].data.question.url2
@@ -235,20 +235,20 @@ TikTok.prototype.solveCaptcha = async function() {
 			y: captcha.body.data.question.tip_y
 		}))
 	}
-	requestUrl = this.buildUrl(protocol, hostname, path, query)
+	requestUrl = buildUrl(protocol, hostname, path, query)
 	options = {
 		method: "POST",
 		url: requestUrl.href,
 		body: body,
 		json: true
 	}
-	const solvedCaptcha = await this.sendRequest(options)
+	const solvedCaptcha = await sendRequest(options)
 	if (solvedCaptcha.body.msg_type === "error") {
 		await this.solveCaptcha()
 	}
 }
 
-TikTok.prototype.signRequest = async function(requestUrl, query, body, headers) {
+async function signRequest(requestUrl, query, body, headers) {
 	return new Promise(resolve => {
 		const options = {
 			method: "POST",
@@ -264,7 +264,7 @@ TikTok.prototype.signRequest = async function(requestUrl, query, body, headers) 
 	})
 }
 
-TikTok.prototype.sendRequest = async function(options) {
+async function sendRequest(options) {
 	return new Promise(resolve => {
 		request(options, function(error, response, body) {
 			if (error) throw new Error(error)
@@ -276,7 +276,7 @@ TikTok.prototype.sendRequest = async function(options) {
 	})
 }
 
-TikTok.prototype.buildUrl = function(protocol, hostname, path, query) {
+function buildUrl(protocol, hostname, path, query) {
 	if (hostname === "log2.musical.ly" || hostname === "api2.musical.ly") {
 		query["_rticket"] = Date.now() * 1000
 		query["ts"] = Date.now()
@@ -291,13 +291,13 @@ TikTok.prototype.buildUrl = function(protocol, hostname, path, query) {
 	)
 }
 
-TikTok.prototype.getRandFromFile = function(path) {
+function getRandFromFile(path) {
 	const file = fs.readFileSync(path)
 	const data = JSON.parse(file)
 	return data[Math.floor(Math.random() * data.length)]
 }
 
-TikTok.prototype.randomString = function(length, chars) {
+function randomString(length, chars) {
 	let mask = ""
 	if (chars.indexOf("a") > -1) mask += "abcdefghijklmnopqrstuvwxyz"
 	if (chars.indexOf("A") > -1) mask += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
