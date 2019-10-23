@@ -1,0 +1,31 @@
+{
+	"name": "tiktok-register",
+	"version": "1.0.0",
+	"description": "Simple example of an account register with TikTok API",
+	"main": "index.js",
+	"dependencies": {
+		"form-urlencoded": "^4.0.1",
+		"opencv4nodejs": "^5.4.0",
+		"random-mac": "^0.0.5",
+		"request": "^2.88.0",
+		"uuid-random": "^1.3.0",
+		"xor-crypt": "^1.1.1"
+	},
+	"devDependencies": {},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/SebastienWae/tiktok-register.git"
+	},
+	"keywords": [
+		"tiktok"
+	],
+	"author": "Sebastien Waegeneire",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/SebastienWae/tiktok-register/issues"
+	},
+	"homepage": "https://github.com/SebastienWae/tiktok-register#readme"
+}
